@@ -68,11 +68,20 @@ while 1:
 */
 
 /*
-* SGP30 General data
+* SGP30 General data 08/2017
+* 
 * I2C address		0x58
 * Init_air_quality	0x2003
 * Measure_air_quality	0x2008
+* 
+* Get_baseline		0x2015
+* Set_baseline		0x201e
+* Set_humidity		0x2061
+* Measure_test		0x2032 (not to be used)
+* Get_feature_set_version	0x202f
+* Measure_raw_signals	0x2050
 */
+
 /*---------------------------------------------------------------------------*/
 #ifndef SGP30_H_
 #define SGP30_H_
@@ -96,10 +105,13 @@ while 1:
 uint8_t SGP30_init(void);
 
 /** \brief Send read command  */
-uint8_t SGP30_send_command(void);
+uint8_t SGP30_send_command(uint8_t command[]);
+
+/** \brief Send read command  */
+uint8_t SGP30_measure_air_quality(void);
 
 /** \brief Get a reading from the SGP30 sensor */
-uint8_t SGP30_read(void);
+uint8_t SGP30_read(uint16_t* co2_reading, uint16_t* tvoc_reading);
 
 /**
  * @}

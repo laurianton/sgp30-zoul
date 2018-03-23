@@ -51,7 +51,12 @@ static struct etimer et;
 
 static uint16_t counter;
 
+#define CO2_LEVEL_INITIAL 400
+#define CO2_LEVEL_HIGH 1000
+#define CO2_LEVEL_CRITICAL 2000
+
 uint8_t send_out, read_in;
+uint16_t CO2, TVOC;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(test_sgp30_sensor_process, "test SGP30 sensor process");
@@ -79,11 +84,11 @@ PROCESS_THREAD(test_sgp30_sensor_process, ev, data)
     PROCESS_YIELD();
 
     if(ev == PROCESS_EVENT_TIMER) {
-      leds_set(LEDS_GREEN);
+/*      leds_set(LEDS_GREEN); */
 
       printf("Counter 0x%X	", counter);
 
-      send_out = SGP30_send_command();
+      send_out = SGP30_measure_air_quality();
       if (send_out) 
       {
          printf("ERROR:  send_out %u\n",send_out); 
@@ -97,13 +102,30 @@ PROCESS_THREAD(test_sgp30_sensor_process, ev, data)
 
     if(ev == PROCESS_EVENT_TIMER) {
 
-      read_in = SGP30_read();
+      read_in = SGP30_read(&CO2, &TVOC);
       if (read_in) 
       {
          printf("ERROR:   read_in %u\n",read_in); 
       }
 
-      leds_set(LEDS_YELLOW);
+      printf("Main process readings CO2	%u	TVOC	%u\n", CO2, TVOC);
+      
+      if (CO2 == CO2_LEVEL_INITIAL) 
+      {
+        leds_set(LEDS_BLUE);
+      } 
+      else if (CO2 > CO2_LEVEL_CRITICAL) 
+      {
+        leds_set(LEDS_RED);
+      } 
+      else if (CO2 > CO2_LEVEL_HIGH)
+      {
+        leds_set(LEDS_YELLOW);
+      }
+      else
+      { 
+        leds_set(LEDS_GREEN);
+      }
 
       etimer_set(&et, CLOCK_SECOND);
       counter++;

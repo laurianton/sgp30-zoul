@@ -57,11 +57,22 @@ SGP30_init(void)
 
 /*---------------------------------------------------------------------------*/
 
-uint8_t 
-SGP30_send_command()
+/** \brief Send a command  */
+uint8_t SGP30_send_command(uint8_t command[])
 {
-  /* Write to the temperature register to trigger a reading */
-  /* if(i2c_single_send(SGP30_ADDR, SGP30_MEASURE) == I2C_MASTER_ERR_NONE) { */
+  /* Send the command to the sensor */
+  if (i2c_burst_send(SGP30_ADDR, command, 2) == I2C_MASTER_ERR_NONE) 
+  {
+    return I2C_MASTER_ERR_NONE;
+  }
+  return i2c_master_error();
+}
+
+
+/** \brief Send command to start air quality reading */
+uint8_t SGP30_measure_air_quality(void)
+{
+  /* Send command 0x2008 to the sensor to start reading */
 
   uint8_t data[] = {0x20, 0x08};
 
@@ -72,9 +83,8 @@ SGP30_send_command()
   return i2c_master_error();
 }
 
-
 uint8_t
-SGP30_read()
+SGP30_read(uint16_t* co2_reading, uint16_t* tvoc_reading)
 {
   uint8_t buf[6], crc1, crc2;
   uint16_t m_CO2eq, m_TVOC;
@@ -85,8 +95,13 @@ SGP30_read()
     crc1 = buf[2];
     m_TVOC = (buf[3] << 8) + (buf[4]);
     crc2 = buf[5];
-    
-    printf("CO2 %u	0x%X	crc 0x%X	TVOC %u	0x%X crc 0x%X\n",m_CO2eq, m_CO2eq, crc1, m_TVOC, m_TVOC, crc2);
+   
+/* CRC checking is missing */
+ 
+/*    printf("CO2 %u	0x%X	crc 0x%X	TVOC %u	0x%X crc 0x%X\n",m_CO2eq, m_CO2eq, crc1, m_TVOC, m_TVOC, crc2); */
+
+    *co2_reading = m_CO2eq;
+    *tvoc_reading = m_TVOC;
     return I2C_MASTER_ERR_NONE;
   }
   return i2c_master_error();
